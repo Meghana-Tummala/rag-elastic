@@ -1,73 +1,37 @@
-RAG with Elastic + Open LLM 🚀
-
-A simplified Retrieval-Augmented Generation (RAG) system built for the internship project.
-It uses Elasticsearch (BM25, dense embeddings, and ELSER sparse retrieval) plus an open-source LLM (via Ollama/HuggingFace) to answer questions over PDF documents stored in Google Drive.
-The project provides both a FastAPI backend and a Streamlit UI, returning grounded answers with citations (filename, link, snippet, page, heading, etc.).
-
-
-
-[▶️ Watch Full Demo Video](https://drive.google.com/file/d/1CeGwrXzYvwfZoUmDX90G95Tih9a3QPzL/view?usp=sharing)
-
-
-
-
-
-✨ Features
-
-Ingestion
-
-Load PDFs from local folder or Google Drive (file/folder link).
-
-Split text into ~300-token chunks with overlap.
-
-Extract metadata: filename, url, chunk_id, page, heading, section, part_section.
-
-Index into Elasticsearch with:
-
-ELSER sparse embeddings → ml.tokens.
-
-Dense embeddings → 384-dim MiniLM.
-
-Raw text → BM25 keyword search.
-
-Retrieval
-
-ELSER-only mode.
-
-Hybrid mode → Reciprocal Rank Fusion (ELSER + dense + BM25).
-
-Configurable Top K (default = 5).
-
-Answer Generation
-
-Local/Open LLM via Ollama (default: llama3).
-
-Grounded responses only (refuses to hallucinate).
-
-Guardrails: rejects unsafe/harmful queries.
-
-API (FastAPI)
-
-POST /query → question → returns answer + citations.
-
-POST /query_debug → returns raw retrieved chunks with scores.
-
-POST /ingest → ingest PDFs from local folder.
-
-POST /ingest_drive → ingest PDFs from Google Drive link.
-
-GET /healthz → health check.
-
-POST /setup_elser → sets up ELSER endpoint + ingest pipeline.
-
-UI (Streamlit)
-
-Ask questions interactively.
-
-Toggle retrieval mode (hybrid / ELSER).
-
-Adjust Top-K.
-
-Show grounded answer with citations.
-
-Debug mode → inspect retrieved chunks.
+RAG with Elastic + Open LLM 🚀A simplified Retrieval-Augmented Generation (RAG) system built for the internship project.It uses Elasticsearch (BM25, dense embeddings, and ELSER sparse retrieval) plus an open-source LLM (via Ollama/HuggingFace) to answer questions over PDF documents stored in Google Drive.The project provides both a FastAPI backend and a Streamlit UI, returning grounded answers with citations (filename, link, snippet, page, heading, etc.).1. IntroductionThis report documents the design and implementation of a Retrieval-Augmented Generation (RAG) system as part of my internship assignment. The goal was to build a simplified yet complete RAG pipeline that integrates:ElasticSearch for multi-surface retrieval (BM25, dense embeddings, ELSER sparse expansion).Open-source LLMs (via Ollama or HuggingFace) for grounded answer generation.Google Drive ingestion for PDF documents.FastAPI backend for serving the RAG system.Streamlit frontend for interactive user queries with citations.The system is designed to answer natural language questions over a dataset of naval navigation rules and regulations stored in PDF format.2. ObjectivesThe assignment defined the following goals:Implement an end-to-end RAG pipeline.Demonstrate hybrid retrieval (ELSER + dense + BM25).Provide an API (FastAPI) and a UI (Streamlit) for querying.Return answers with citations (title, link, snippet, metadata).Apply guardrails for safety and reliability.Deliver code with unit tests and reproducibility.3. System Architecture3.1 High-Level FlowGoogle Drive / Local PDFs → Ingestion → Elasticsearch Index
+          |                            |
+          ↓                            ↓
+    PDF Parser + Chunker          (ELSER, Dense, BM25)
+          ↓                            |
+    Embedding + Metadata               |
+          ↓                            |
+       Index Docs  ---------------------
+                     Retrieval (ELSER-only / Hybrid via RRF)
+                                   |
+                                   ↓
+                             LLM Generation
+                                   |
+                                   ↓
+                         Answer + Citations
+3.2 ComponentsIngestion (ingest.py, drive.py)Loads PDFs from local folders or Google Drive.Extracts text, splits into 300-token chunks with overlap.Attaches metadata: filename, url, chunk_id, page, heading, section, part_section.Generates dense embeddings (MiniLM-L6-v2) and stores in ES.Populates ELSER sparse tokens via ingest pipeline.Indexing (es_utils.py, elser_setup.py)Creates ES index with mappings for:text (BM25),embedding (dense_vector, 384 dims),ml.tokens (sparse_vector for ELSER),Metadata fields.Configures ELSER endpoint + pipeline.Supports automatic backfill of sparse tokens.Retrieval (retrieve.py)Supports three search methods:BM25: keyword matching.Dense: cosine similarity over MiniLM embeddings.ELSER: sparse expansion over ml.tokens.Hybrid mode fuses results using Reciprocal Rank Fusion (RRF).Configurable top_k parameter (default = 5).Answer Generation (generate.py)Formats a prompt with question + retrieved chunks.Uses Ollama (llama3) for grounded response.Falls back to concatenated context if LLM unavailable.Enforces “If not in context → say I don’t know”.Guardrails (guardrails.py)Blocks unsafe queries (e.g., “build a bomb”, malware, self-harm).Integrated into /query endpoint (rejects unsafe input).Backend API (main.py)Built with FastAPI.Routes:/query: question → answer + citations./query_debug: raw hits with scores, chunks./ingest: ingest PDFs from local folder./ingest_drive: ingest PDFs from Google Drive link./setup_elser: initialize ELSER pipeline./healthz: health check for Elasticsearch.Handles startup: auto-setup ELSER and optional auto-ingest.Frontend UI (app.py)Built with Streamlit.Features:Ask a question via text box.Toggle retrieval mode: hybrid / ELSER.Adjust Top-K slider.Show answers with citations.Debug mode → inspect raw chunks + metadata.Example query chips for quick testing.Testing (pytest suite)test_ingest.py → validates chunking + metadata extraction.test_retrieve.py → validates RRF fusion + hybrid retrieval.test_es_utils.py → validates ES index mappings.conftest.py → provides fake ES + fake embeddings for lightweight tests.4. Implementation Details4.1 Data IngestionLocal ingest: POST /ingest with folder path.Google Drive ingest: POST /ingest_drive with file/folder link.Uses pypdf for text extraction.Chunks text using sliding windows of 320 words with 60-word overlap.Attaches metadata (heading, section, part/section parsed via regex).4.2 Indexing in ElasticsearchIndex schema defined in es_utils.py:text: text field for BM25.embedding: dense vector for semantic similarity.ml.tokens: sparse vector for ELSER.Metadata fields for citations.ELSER setup:Starts trial license (if needed).Creates inference endpoint for ELSER.Configures ingest pipeline → populate ml.tokens.Optionally backfills tokens into existing docs.4.3 RetrievalImplemented in retrieve.py.Modes:ELSER-only → text expansion retrieval.Hybrid → fuses ELSER + dense + BM25 using RRF.Fusion ensures relevance across lexical, dense, and sparse embeddings.4.4 Answer Generationgenerate.py constructs system prompt:Restricts LLM to retrieved context only.Blocks speculation.Uses Ollama Llama3 by default, configurable via OLLAMA_MODEL.Low-temperature setting (temperature=0.1) for deterministic answers.Returns final answer + citations.4.5 GuardrailsUnsafe queries (weapons, malware, self-harm) blocked by is_safe().Implemented at API entrypoint → prevents misuse.4.6 FrontendStreamlit interface (docker/ui/app.py):Minimalist UI with cards, badges, and styled answer boxes.Sidebar for settings:API URL override.Retrieval mode toggle.Top-K slider.Debug mode shows raw hits with scores.Example query chips for quick testing.5. Example UsageIngest PDFscurl -X POST http://127.0.0.1:8000/ingest_drive \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://drive.google.com/drive/folders/xxx"}'
+Querycurl -X POST http://127.0.0.1:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Summarize Rule 13 (Overtaking)."}'
+Response:{
+  "answer": "Rule 13 requires a vessel overtaking to keep out of the way.",
+  "citations": [
+    {
+      "title": "NavRules.pdf",
+      "link": "file:///data/pdfs/NavRules.pdf",
+      "snippet": "Rule 13 — Overtaking. A vessel overtaking shall keep...",
+      "page": 42,
+      "heading": "Rule 13 — Overtaking",
+      "chunk_id": "NavRules__p042_00",
+      "source": "elser",
+      "rrf": 0.03125
+    }
+  ]
+}
+6. Evaluation Against RequirementsRequirementImplemented?NotesIngest PDFs from Google Drive✅via drive.pyChunking & metadata✅320 words + overlapIndex with BM25, dense, ELSER✅es_utils.py mappingsRetrieval: ELSER + Hybrid✅retrieve_docs()Top-K configurable✅default = 5Answer generation with Open LLM✅via OllamaGuardrails for safety✅guardrails.pyAPI with FastAPI✅/query, /ingest, /healthz, etc.UI with Streamlit✅interactive web appCitations (title, link, snippet, page, heading)✅included in /query responseUnit tests✅pytest suiteLatency ≤ 3s⚠️Depends on model size and ES setupCost-free (open models only)✅Ollama + open ES7. ConclusionThis project successfully implements a simplified yet complete RAG pipeline using ElasticSearch and open LLMs. It demonstrates:End-to-end ingestion, indexing, retrieval, and generation.Hybrid retrieval (ELSER + dense + BM25).Safe, grounded, and explainable answers with citations.A functional FastAPI backend and Streamlit frontend.Unit tests ensuring correctness of ingestion and retrieval.The system can be extended further by:Adding caching and reranking models.Improving UI (filters, advanced highlighting).Deploying with Docker Compose for one-click setup.Supporting multi-user / multi-tenant scenarios.Overall, the project meets the defined goals and provides a solid foundation for real-world RAG applications.

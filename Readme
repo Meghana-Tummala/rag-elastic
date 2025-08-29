@@ -1,0 +1,65 @@
+RAG with Elastic + Open LLM 🚀
+
+A simplified Retrieval-Augmented Generation (RAG) system built for the internship project.
+It uses Elasticsearch (BM25, dense embeddings, and ELSER sparse retrieval) plus an open-source LLM (via Ollama/HuggingFace) to answer questions over PDF documents stored in Google Drive.
+The project provides both a FastAPI backend and a Streamlit UI, returning grounded answers with citations (filename, link, snippet, page, heading, etc.).
+
+✨ Features
+
+Ingestion
+
+Load PDFs from local folder or Google Drive (file/folder link).
+
+Split text into ~300-token chunks with overlap.
+
+Extract metadata: filename, url, chunk_id, page, heading, section, part_section.
+
+Index into Elasticsearch with:
+
+ELSER sparse embeddings → ml.tokens.
+
+Dense embeddings → 384-dim MiniLM.
+
+Raw text → BM25 keyword search.
+
+Retrieval
+
+ELSER-only mode.
+
+Hybrid mode → Reciprocal Rank Fusion (ELSER + dense + BM25).
+
+Configurable Top K (default = 5).
+
+Answer Generation
+
+Local/Open LLM via Ollama (default: llama3).
+
+Grounded responses only (refuses to hallucinate).
+
+Guardrails: rejects unsafe/harmful queries.
+
+API (FastAPI)
+
+POST /query → question → returns answer + citations.
+
+POST /query_debug → returns raw retrieved chunks with scores.
+
+POST /ingest → ingest PDFs from local folder.
+
+POST /ingest_drive → ingest PDFs from Google Drive link.
+
+GET /healthz → health check.
+
+POST /setup_elser → sets up ELSER endpoint + ingest pipeline.
+
+UI (Streamlit)
+
+Ask questions interactively.
+
+Toggle retrieval mode (hybrid / ELSER).
+
+Adjust Top-K.
+
+Show grounded answer with citations.
+
+Debug mode → inspect retrieved chunks.

@@ -2,6 +2,17 @@
 
 A simplified **Retrieval-Augmented Generation (RAG)** system built for the internship project. It uses **Elasticsearch** (BM25, dense embeddings, and ELSER sparse retrieval) plus an **open-source LLM** (via Ollama/HuggingFace) to answer questions over PDF documents stored in Google Drive. The project provides both a **FastAPI backend** and a **Streamlit UI**, returning grounded answers with citations (filename, link, snippet, page, heading, etc.).
 
+
+<img width="1265" height="663" alt="Screenshot 2025-08-29 012213" src="https://github.com/user-attachments/assets/4b2fb2a7-04fa-4795-9422-037c1d74374c" />
+
+<img width="1280" height="697" alt="Screenshot 2025-08-29 012409" src="https://github.com/user-attachments/assets/934fa1a6-785f-4473-a14d-eec20022f1ee" />
+
+
+<img width="1278" height="725" alt="Screenshot 2025-08-29 012356" src="https://github.com/user-attachments/assets/cab055eb-b5ff-4174-906b-18649d2a66c4" />
+
+
+
+
 ## 📋 Table of Contents
 
 - [Introduction](#-introduction)

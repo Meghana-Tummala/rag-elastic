@@ -4,6 +4,11 @@ A simplified Retrieval-Augmented Generation (RAG) system built for the internshi
 It uses Elasticsearch (BM25, dense embeddings, and ELSER sparse retrieval) plus an open-source LLM (via Ollama/HuggingFace) to answer questions over PDF documents stored in Google Drive.
 The project provides both a FastAPI backend and a Streamlit UI, returning grounded answers with citations (filename, link, snippet, page, heading, etc.).
 
+
+
+[▶️ Watch Full Demo Video](https://drive.google.com/file/d/1CeGwrXzYvwfZoUmDX90G95Tih9a3QPzL/view?usp=sharing)
+
+
 ✨ Features
 
 Ingestion

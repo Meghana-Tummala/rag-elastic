@@ -13,6 +13,27 @@ A simplified **Retrieval-Augmented Generation (RAG)** system built for the inter
 
 
 
+
+
+## 🎬 Demo Video
+
+**📹 [Watch 5-Minute Demo Video](https://drive.google.com/file/d/1CeGwrXzYvwfZoUmDX90G95Tih9a3QPzL/view?usp=sharing)**
+
+*Demonstration includes:*
+- ✅ PDF ingestion from Google Drive
+- ✅ Hybrid retrieval (ELSER + Dense + BM25) 
+- ✅ Real-time querying with citations
+- ✅ Guardrails and safety features in action
+- ✅ Streamlit UI walkthrough
+
+---
+
+
+
+
+
+
+
 ## 📋 Table of Contents
 
 - [Introduction](#-introduction)
